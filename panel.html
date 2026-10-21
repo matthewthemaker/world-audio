@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>World Audio</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; padding: 16px; max-width: 640px; background: #10131a; color: #f2f4f8; font: 14px/1.45 system-ui, sans-serif; }
+  h1 { font-size: 21px; margin: 0 0 3px; letter-spacing: .2px; }
+  .sub { color: #aab4c6; font-size: 12px; margin-bottom: 15px; }
+  .status { padding: 9px 10px; border-radius: 9px; background: #202634; color: #d8e2f1; margin-bottom: 12px; min-height: 38px; }
+  button { border: 0; border-radius: 9px; padding: 11px 12px; color: #fff; font-weight: 700; cursor: pointer; width: 100%; background: #5b66e8; margin-bottom: 8px; }
+  button.secondary { background: #2b3343; }
+  button.stop { background: #873f50; }
+  label { display: flex; justify-content: space-between; gap: 12px; margin: 12px 0 4px; color: #dbe2ee; }
+  input[type=range] { width: 100%; accent-color: #8b93ff; }
+  .tiny { color: #9da8ba; font-size: 11px; margin-top: 10px; }
+  .row { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+  .row input { accent-color: #8b93ff; }
+  .pill { display:inline-block; border:1px solid #394256; padding:2px 7px; border-radius:20px; font-size:10px; color:#bac5d8; }
+
+  #mapName { width:100%; border:1px solid #394256; background:#151a24; color:#f2f4f8; border-radius:8px; padding:10px; }
+  .row > button { flex:1; }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  .section { margin: 14px 0 6px; font-size: 12px; font-weight: 700; color: #aab4c6; text-transform: uppercase; letter-spacing: .6px; }
+  #radar { display: block; background: #151a24; border-radius: 12px; touch-action: none; cursor: grab; }
+  #stems { margin-top: 8px; }
+  .stem { display: flex; align-items: center; gap: 7px; padding: 5px 6px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; }
+  .stem:hover { background: #171c27; }
+  .stem.sel { background: #1b2130; border-color: #3a4562; }
+  .stem .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .stem .nm { flex: 1; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stem .meter { width: 46px; height: 6px; border-radius: 4px; background: #232a39; overflow: hidden; flex: none; }
+  .stem .meter i { display: block; height: 100%; width: 0; background: #8b93ff; }
+  button.mini { width: auto; margin: 0; padding: 3px 6px; font-size: 10px; border-radius: 6px; background: #2b3343; color: #aab4c6; min-width: 24px; }
+  button.mini.on { background: #5b66e8; color: #fff; }
+  button.mini.warn { background: #873f50; color: #fff; }
+  button.mini.pin { background: #b8873a; color: #fff; }
+  #detail { background: #151a24; border-radius: 10px; padding: 4px 11px 10px; margin-top: 6px; }
+  #detail label { margin-top: 8px; font-size: 13px; }
+  #detailTitle { margin-top: 8px; font-size: 12px; color: #aab4c6; }
+  #detailTitle b { color: #f2f4f8; }
+  #scenes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  #scenes button { margin: 0; padding: 9px 4px; font-size: 12px; background: #2b3343; color: #cfd7e6; }
+  #scenes button.on { background: #5b66e8; color: #fff; }
+  #sceneDesc { color: #aab4c6; font-size: 12px; margin: 8px 2px 0; min-height: 34px; }
+  #spots { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  button.chip { width: auto; margin: 0; padding: 5px 9px; font-size: 11px; border-radius: 14px; background: #202634; color: #cfd7e6; border: 1px solid #394256; }
+  button.chip:hover { background: #2b3343; }
+  .hintline { color: #8a96ab; font-size: 11px; margin-top: 6px; }
+  #quick { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  #detail select { margin-top: 2px; }
+  .stem .dist { width: 38px; flex: none; text-align: right; font-size: 10.5px; color: #8a96ab; }
+  #presets { display: flex; flex-wrap: wrap; gap: 5px; }
+  #distLine { margin: 4px 0 0; color: #aab4c6; }
+  #chat { background: #151a24; border-radius: 10px; padding: 8px; max-height: 32vh; min-height: 52px; overflow-y: auto; font-size: 12.5px; }
+  #chat .msg { margin: 0 0 7px; padding: 6px 9px; border-radius: 9px; max-width: 92%; white-space: pre-wrap; word-wrap: break-word; }
+  #chat .me { background: #2f3b78; margin-left: auto; width: fit-content; }
+  #chat .ai { background: #202634; width: fit-content; }
+  #chat .err { background: #4a2430; color: #ffd3dc; width: fit-content; }
+  #chat .hint { color: #8a96ab; font-size: 12px; }
+  #chat .acts { color: #7f8cff; font-size: 10.5px; margin: -3px 0 7px 4px; }
+  #askRow { display: flex; gap: 6px; margin-top: 8px; }
+  #askRow input[type=text] { flex: 1; min-width: 0; background: #202634; color: #f2f4f8; border: 1px solid #394256; border-radius: 8px; padding: 8px 9px; font: inherit; }
+  #askRow button { width: auto; margin: 0; padding: 8px 11px; }
+  #mic.listening { background: #d2455f; animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: .6; } }
+  details.cfg { margin-top: 8px; color: #aab4c6; font-size: 12px; }
+  details.cfg summary { cursor: pointer; }
+  details.cfg input[type=text], details.cfg input[type=password] { width: 100%; background: #202634; color: #f2f4f8; border: 1px solid #394256; border-radius: 8px; padding: 7px 9px; font: inherit; margin: 4px 0 6px; }
+  details.cfg a { color: #8b93ff; }
+  details.cfg .row { margin: 6px 0; }
+  select { width: 100%; background: #202634; color: #f2f4f8; border: 1px solid #394256; border-radius: 8px; padding: 8px 9px; font: inherit; }
+  #hp { background: #151a24; border: 1px solid #394256; border-radius: 10px; padding: 9px 11px 11px; margin-top: 8px; }
+  #hp .hpTitle { font-weight: 700; font-size: 13px; }
+  #hp .hpText { color: #cfd7e6; font-size: 12.5px; margin: 5px 0 4px; }
+  #hpBtns button.chip { display: block; width: 100%; text-align: left; margin: 6px 0 0; padding: 8px 10px; border-radius: 10px; white-space: normal; }
+  #hpBtns button.chip.go { background: #5b66e8; color: #fff; border-color: #5b66e8; }
+</style>
+</head>
+<body>
+  <h1>World Audio <span class="pill">v1.1.0 beta</span></h1>
+  <div class="sub">Place the sound in a virtual world.</div>
+  <div id="status" class="status">Open a YouTube video, start playback, then press Start World Audio.</div>
+  <button id="start">Start World Audio</button>
+  <button id="stop" class="stop">Stop World Audio</button>
+
+  <div class="section">AI assistant (Gemini)</div>
+  <div id="chat"></div>
+  <div id="askRow">
+    <input id="askText" type="text" placeholder="Try: put me next to the singer" autocomplete="off">
+    <button id="mic" class="secondary" title="Talk to the assistant">🎤</button>
+    <button id="ask" title="Send">Send</button>
+  </div>
+  <div id="quick">
+    <button class="chip" id="suggest" title="Reads the video title and the audio, then picks a scene, room and placement">✨ Suggest a setup</button>
+    <button class="chip" id="undo" title="Undo the assistant's last change">↶ Undo</button>
+    <button class="chip" id="hpBtn" title="Plays a beep in each ear to find out if you are on headphones">🎧 Headphone check</button>
+    <button class="chip" id="stopMotion" hidden>■ Stop all motion</button>
+  </div>
+  <div id="hp" hidden>
+    <div class="hpTitle">🎧 Headphone check</div>
+    <div id="hpText" class="hpText"></div>
+    <div id="hpBtns"></div>
+  </div>
+  <details class="cfg" id="cfg">
+    <summary>Assistant settings</summary>
+    <label for="geminiKey" style="margin:8px 0 0">Gemini API key</label>
+    <input id="geminiKey" type="password" placeholder="Paste your key" autocomplete="off">
+    <div>Free key: <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a>. It is stored only in this browser.</div>
+    <label for="geminiModel" style="margin:8px 0 0">Model</label>
+    <input id="geminiModel" type="text" placeholder="gemini-2.5-flash" autocomplete="off">
+    <div class="row"><input id="wake" type="checkbox"><label for="wake" style="margin:0">Wake word: say “Hey World”</label></div>
+    <div class="hintline" id="wakeState" style="margin:-2px 0 6px"></div>
+    <div class="hintline" style="margin:0 0 8px">Shortcut: Alt+Shift+W starts listening (change it at chrome://extensions/shortcuts). The wake word only listens while this panel is open.</div>
+    <div class="row"><input id="speakReply" type="checkbox" checked><label for="speakReply" style="margin:0">Speak replies aloud</label></div>
+    <div style="display:flex; gap:6px">
+      <button id="stopSpeech" class="secondary" style="padding:7px">Stop talking</button>
+      <button id="clearChat" class="secondary" style="padding:7px">Clear chat</button>
+    </div>
+  </details>
+  <div class="hintline">Tap 🎤, speak, and it sends when you stop talking. The video gets quieter while it listens. Try "how far is the singer?", "make the guitar circle me slowly", "take me to the drums" or "save this as front row".</div>
+  <div id="presetsSection" hidden>
+    <div class="section">Saved setups</div>
+    <div id="presets"></div>
+  </div>
+
+  <div class="section">Where are you?</div>
+  <div id="scenes"></div>
+  <div id="sceneDesc"></div>
+
+  <div class="section">Sound map — drag a dot, or yourself</div>
+  <canvas id="radar"></canvas>
+  <div id="spots"></div>
+  <div class="hintline">Drag the white arrow to walk around. Keys: W A S D walk, Q E turn. Walking needs World Lock on.</div>
+  <div class="section">Room mapper</div>
+  <input id="mapName" type="text" maxlength="48" placeholder="Room name (e.g. Living Room)" aria-label="Room name">
+  <div class="row"><button id="mapStart" class="secondary">Start room scan</button><button id="mapCorner" disabled>Mark corner</button></div>
+  <div class="row"><button id="mapFinish" disabled>Finish & save room</button><button id="mapCancel" class="secondary" disabled>Cancel scan</button></div>
+  <label for="savedRooms">Saved room maps</label><select id="savedRooms"><option value="">No saved maps yet</option></select>
+  <div class="row"><button id="mapLoad" class="secondary" disabled>Use selected map</button><button id="mapDelete" class="stop" disabled>Delete map</button></div>
+  <div class="hintline" id="mapStatus">Walk around the room with the device, then tap Mark corner at each corner. Motion tracking is approximate; keep the device upright and move at a steady pace.</div>
+
+  <div class="section">Video Mode · experimental</div>
+  <div class="hintline">Open the same YouTube video on each device. Choose Main device on the host and Satellite on receivers, then establish the existing manual WebRTC connection. Video sync uses that peer connection's data channel.</div>
+  <div class="row"><button id="videoSyncEnable">Enable Video Sync</button><button id="videoSyncNow" class="secondary">Sync now</button></div>
+  <div class="status" id="videoSyncStatus">Video sync is off. This feature is experimental and has not been tested across physical devices.</div>
+
+  <div class="section">Sound Locator AI · experimental</div>
+  <div class="hintline">Ask about a sound at the current point in a public YouTube video. Gemini can inspect video context when supported by your selected model. Distance is an estimate of apparent scene distance, not a measured real-world distance.</div>
+  <label for="soundQuestion">What sound are you asking about?</label>
+  <input id="soundQuestion" type="text" maxlength="240" placeholder="e.g. Where is the car horn, and how far away does it sound?" style="width:100%;background:#151a24;color:#f2f4f8;border:1px solid #394256;border-radius:8px;padding:10px">
+  <div class="row"><button id="soundAnalyze">🔎 Analyze sound at current timestamp</button></div>
+  <div class="status" id="soundStatus">Open a public YouTube video, pause near the sound, describe it, then analyze.</div>
+  <div class="hintline">Requires the Gemini API key in Assistant settings and an API model that supports video understanding. The AI must state uncertainty; stereo audio and movie mixing do not reveal exact physical distance by themselves.</div>
+
+  <div class="section">Multi-device audio · web app</div>
+  <p class="hintline">Open the receiver web app in a full browser tab. Your main computer can keep using the World Audio extension; the other computer or a phone can receive the processed audio in its browser.</p>
+  <button id="openMultiDeviceApp">📱 Open Multi-device Audio Web App</button>
+  <p class="hintline">For automatic pairing, host the included <code>web-app</code> folder on HTTPS and run the included optional signaling server on a public HTTPS/WSS host. Enter the same server URL and 6-digit code on the TV/device. Audio still travels peer-to-peer.</p>
+  <label for="pairServerUrl">Signaling server URL (WSS)</label>
+  <input id="pairServerUrl" type="url" value="wss://YOUR-SIGNALING-SERVER.example/ws" placeholder="wss://your-server.example/ws" style="width:100%;background:#151a24;color:#f2f4f8;border:1px solid #394256;border-radius:8px;padding:10px">
+  <label for="pairSessionCode">6-digit session code</label>
+  <input id="pairSessionCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Generate a code" style="width:100%;background:#151a24;color:#f2f4f8;border:1px solid #394256;border-radius:8px;padding:10px">
+  <div class="row"><button id="generatePairCode">Generate code</button><button id="startAutoPair" class="secondary">Start automatic pairing</button><button id="stopAutoPair" class="secondary">Stop pairing</button></div>
+  <p class="hintline" id="autoPairStatus">Generate a code, then start pairing. Type that code into the receiver app on a TV, laptop, phone, or tablet.</p>
+  <div class="section">Extension pairing fallback</div>
+  <p class="hintline">You can also pair two computers that both have the extension installed using the controls below.</p>
+  <label for="streamRole">This device</label>
+  <select id="streamRole"><option value="sender">Main device (YouTube audio)</option><option value="receiver">Satellite (receive audio)</option></select>
+  <div class="row"><button id="manualOffer">Create offer (main device)</button><button id="manualAnswer" class="secondary">Create answer (satellite)</button></div>
+  <label for="manualOfferText">Offer / answer text</label>
+  <textarea id="manualOfferText" rows="5" placeholder="On the main device, create an offer and copy it here on the satellite. On the satellite, paste the offer and click Create answer."></textarea>
+  <div class="row"><button id="manualApply">Apply answer (main device)</button><button id="streamDisconnect" class="secondary">Disconnect</button></div>
+  <div class="hintline" id="streamStatus">Step 1: Start World Audio on the main device. Step 2: create offer, exchange text, then apply answer.</div>
+
+  <div id="stems"></div>
+
+  <div id="detail">
+    <div id="detailTitle">Adjusting: <b id="detailName">–</b></div>
+    <div class="hintline" id="distLine"></div>
+    <label for="sAngle">Direction <strong id="sAngleVal">0°</strong></label>
+    <input id="sAngle" type="range" min="-180" max="180" value="0" step="1">
+    <label for="sDist">Distance <strong id="sDistVal">2.0 m</strong></label>
+    <input id="sDist" type="range" min="1" max="12" value="2" step="0.5">
+    <label for="mKind">Motion</label>
+    <select id="mKind">
+      <option value="none">None</option>
+      <option value="orbit">Circle me</option>
+      <option value="sweep">Sweep left and right</option>
+      <option value="pulse">In and out</option>
+      <option value="figure8">Figure of eight</option>
+    </select>
+    <label for="mPeriod">One cycle every <strong id="mPeriodVal">12 s</strong></label>
+    <input id="mPeriod" type="range" min="3" max="60" value="12" step="1">
+    <label for="sVol">Volume <strong id="sVolVal">100%</strong></label>
+    <input id="sVol" type="range" min="0" max="150" value="100" step="5">
+  </div>
+
+  <div class="section">World</div>
+  <div class="row"><input id="auto" type="checkbox" checked><label for="auto" style="margin:0">AI auto-placement <span id="autoText">ON</span></label></div>
+  <label for="spread">Stage width <strong id="spreadVal">50%</strong></label>
+  <input id="spread" type="range" min="0" max="100" value="50" step="5">
+  <label for="room">Room</label>
+  <select id="room"></select>
+  <label for="reverb">Room reverb <strong id="reverbVal">100%</strong></label>
+  <input id="reverb" type="range" min="0" max="150" value="100" step="5">
+  <label for="vsplit">Vocal separation <strong id="vsplitVal">80%</strong></label>
+  <input id="vsplit" type="range" min="0" max="100" value="80" step="5">
+  <div class="hintline">How much of the centred lead vocal is lifted out of the band, so you can move the singer on their own. Centred drums or bass can come along with it.</div>
+  <label for="volume">Master volume <strong id="volumeVal">100%</strong></label>
+  <input id="volume" type="range" min="0" max="150" value="100" step="5">
+  <div class="row"><input id="speaker" type="checkbox"><label for="speaker" style="margin:0">Speaker mode <span id="speakerText">OFF</span></label></div>
+  <div class="hintline" id="hpStatus" style="margin:-4px 0 8px">Listening setup: not checked yet.</div>
+  <div class="row"><input id="lock" type="checkbox" checked><label for="lock" style="margin:0">World Lock <span id="lockText">ON</span></label></div>
+  <div class="row"><input id="sway" type="checkbox" checked><label for="sway" style="margin:0">Natural head sway <span id="swayText">ON</span></label></div>
+  <label for="turn">Turn listener <strong id="turnVal">0°</strong></label>
+  <input id="turn" type="range" min="-180" max="180" value="0" step="5">
+  <label for="push">Push everything away <strong id="pushVal">+0 m</strong></label>
+  <input id="push" type="range" min="0" max="8" value="0" step="0.5">
+  <button id="reset" class="secondary" style="margin-top:12px">Reset World</button>
+  <div class="tiny">World Audio 1.1.0 beta: spatial audio, experimental synchronized YouTube video, and experimental Sound Locator AI. Video sync requires the same video open on each device and a working manual WebRTC connection. You can close this panel; the audio keeps running until you press Stop. Best tested in Chrome with a YouTube video already playing.</div>
+<script src="panel.js"></script>
+</body>
+</html>

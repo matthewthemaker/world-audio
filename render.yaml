@@ -1,0 +1,18 @@
+# Render Blueprint: deploys the WebSocket signaling service and HTTPS receiver site.
+services:
+  - type: web
+    name: world-audio-signaling
+    runtime: node
+    rootDir: signaling-server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+  - type: web
+    name: world-audio-receiver
+    runtime: static
+    rootDir: web-app
+    buildCommand: echo "Publishing static World Audio receiver"
+    staticPublishPath: .

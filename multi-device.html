@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#10131a">
+<title>World Audio · Multi-device Receiver</title>
+<style>
+:root{color-scheme:dark;--bg:#10131a;--card:#202634;--muted:#aab4c6;--accent:#7d88ff;--green:#5ed1c0}
+*{box-sizing:border-box}
+body{margin:0 auto;padding:20px 15px 40px;max-width:760px;background:var(--bg);color:#f2f4f8;font:15px/1.5 system-ui,sans-serif}
+h1{font-size:25px;margin:0 0 4px}h2{font-size:17px;margin:0 0 8px}
+.sub,.muted{color:var(--muted);font-size:13px}
+.pill{display:inline-block;border:1px solid #394256;border-radius:20px;padding:2px 8px;font-size:11px;color:#cfd7e6}
+.card{background:var(--card);border-radius:14px;padding:16px;margin-top:14px}
+.status{background:#151a24;border-radius:9px;padding:10px 12px;margin-top:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+button{border:0;border-radius:9px;padding:11px 13px;background:var(--accent);color:white;font-weight:700;cursor:pointer}
+button.secondary{background:#343e52}button.stop{background:#873f50}
+button:disabled{opacity:.45;cursor:not-allowed}
+textarea{display:block;width:100%;min-height:150px;resize:vertical;background:#151a24;color:#f2f4f8;border:1px solid #394256;border-radius:9px;padding:10px;font:12px/1.4 ui-monospace,monospace;margin:8px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.row button{flex:1}
+label{display:block;color:#dbe2ee;margin-top:12px}
+audio{display:block;width:100%;margin-top:12px}
+.notice{border-left:3px solid #e3b66e;padding:8px 10px;background:#302a20;color:#ffe1a7;border-radius:5px;font-size:13px;margin-top:10px}
+.steps{padding-left:20px}.steps li{margin:7px 0}
+@media(max-width:520px){body{padding:15px 11px 30px}.card{padding:13px}.row button{min-width:120px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>World Audio <span class="pill">Multi-device receiver</span></h1>
+  <div class="sub">Receive processed audio from your main World Audio computer on another laptop, tablet or phone.</div>
+</header>
+<div id="status" class="status">Ready. Enter the 6-digit code from the main World Audio computer to pair automatically.</div>
+
+<section class="card">
+  <h2>Connect with a session code</h2>
+  <p class="muted">On the main computer, open World Audio, choose Main device, enter the same signaling-server URL, generate a code, and start automatic pairing. On this device, enter that code below. On smart TVs, use the remote to type the six digits; the layout uses large controls and does not require a QR scanner.</p>
+  <label for="serverUrl">Signaling server URL (WSS)</label>
+  <input id="serverUrl" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" value="wss://YOUR-SIGNALING-SERVER.example/ws" placeholder="wss://your-server.example/ws">
+  <label for="sessionCode">6-digit session code</label>
+  <input id="sessionCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="123456">
+  <div class="row">
+    <button id="connectCode">Connect with code</button>
+    <button id="stopCode" class="secondary">Stop</button>
+  </div>
+  <audio id="remoteAudio" controls autoplay playsinline></audio>
+  <div class="row">
+    <button id="play" class="secondary">Enable audio / TV playback</button>
+    <button id="disconnect" class="stop">Disconnect</button>
+  </div>
+  <details style="margin-top:14px"><summary>Manual pairing fallback</summary>
+    <p class="muted">If no signaling server is configured, you can still use the original copy/paste method.</p>
+    <label for="signal">Offer / answer message</label>
+    <textarea id="signal" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Paste offer here for manual pairing."></textarea>
+    <div class="row"><button id="answer" class="secondary">Create manual answer</button><button id="copy" class="secondary">Copy text</button><button id="clear" class="secondary">Clear</button></div>
+  </details>
+  <div class="notice">The signaling server must be deployed and reachable over WSS before short-code pairing works. This ZIP includes server source and setup notes, not a live server URL. On smart TVs, use a browser that supports WebRTC audio and WebSockets. Some TV browsers restrict background audio or autoplay; press Enable audio / TV playback after connecting. If the TV browser does not support WebRTC, this app cannot make it compatible.</div>
+</section>
+
+<section class="card">
+  <h2>Privacy and compatibility</h2>
+  <p class="muted">The signaling server exchanges session codes and WebRTC connection details only; it does not receive the audio. Once connected, audio travels over a WebRTC peer connection. A STUN server helps establish the connection; some networks may still require a TURN relay, which is not included. Use a session code only with people/devices you trust.</p>
+  <p class="muted">The main device must be running the World Audio 1.1.0 extension. This receiver works in compatible desktop/mobile browsers and may work in smart-TV browsers that support WebRTC audio and WebSockets. TV browser support varies by model and firmware; no web app can bypass missing browser features.</p>
+</section>
+<script src="multi-device.js"></script>
+</body>
+</html>
